@@ -1,5 +1,5 @@
-<html>
-<body>
-<h2>Hello World!</h2>
-</body>
-</html>
+<%-- index.jsp --%>
+<%
+    // Redirigir automáticamente al Servlet Controlador
+    response.sendRedirect("ControladorProductos");
+%>

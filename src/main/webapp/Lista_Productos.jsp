@@ -39,6 +39,14 @@
             text-align: center;
             color: #333;
         }
+
+        table{
+            float: left;
+        }
+
+        #contenedorBoton{
+            margin-left: 1000px;
+        }
     </style>
 </head>
 <body>
@@ -69,6 +77,8 @@
     </c:forEach>
 
 </table>
-
+<div id="contenedorBoton">
+    <input type="button" value="Insertar Producto">
+</div>
 </body>
 </html>

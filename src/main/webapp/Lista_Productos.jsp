@@ -1,41 +1,74 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.*, com.pildorasinformaticas.productos.*"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
+<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Inventario de productos</title>
+
     <style>
-        .cabecera{
-            border-bottom: solid #f00 1px;
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #e6f7ff;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
         }
     </style>
 </head>
-<%
-    // Obtener los productos desde el controlador (servlet)
-    List<Productos> losProductos = (List<Productos>) request.getAttribute("LISTAPRODUCTOS");
-%>
 <body>
+
+<h1>Lista de Productos</h1>
+
 <table>
     <tr>
-        <th class="cabecera">Código artículo</th>
-        <th class="cabecera">Sección</th>
-        <th class="cabecera">Nombre artículo</th>
-        <th class="cabecera">Fecha</th>
-        <th class="cabecera">Precio</th>
-        <th class="cabecera">Importado</th>
-        <th class="cabecera">País de origen</th>
+        <th>Código</th>
+        <th>Sección</th>
+        <th>Nombre</th>
+        <th>Fecha</th>
+        <th>Precio</th>
+        <th>Importado</th>
+        <th>País</th>
     </tr>
-    <% for(Productos tempProd : losProductos) { %>
+
+    <c:forEach var="tempProd" items="${LISTAPRODUCTOS}">
         <tr>
-            <td><%= tempProd.getcArt() %></td>
-            <td><%= tempProd.getSeccion() %></td>
-            <td><%= tempProd.getnArt() %></td>
-            <td><%= tempProd.getFecha() %></td>
-            <td><%= tempProd.getPrecio() %></td>
-            <td><%= tempProd.getImportado() %></td>
-            <td><%= tempProd.getpOrig() %></td>
+            <td>${tempProd.cArt}</td>
+            <td>${tempProd.seccion}</td>
+            <td>${tempProd.nArt}</td>
+            <td>${tempProd.fecha}</td>
+            <td>${tempProd.precio}</td>
+            <td>${tempProd.importado}</td>
+            <td>${tempProd.pOrig}</td>
         </tr>
-    <% } %>
+    </c:forEach>
+
 </table>
+
 </body>
 </html>

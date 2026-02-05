@@ -1,10 +1,7 @@
 package com.pildorasinformaticas.productos;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -17,12 +14,12 @@ import java.util.Date;
  * </p>
  *
  * @author Gaston
- * @version 1.0
+ * @version 1.2
  */
 public class ModeloProductos {
 
     /** Fuente de datos (Pool de conexiones) gestionada por el servidor. */
-    private DataSource origenDatos;
+    private final DataSource origenDatos;
 
     /**
      * Constructor del Modelo.
@@ -39,7 +36,7 @@ public class ModeloProductos {
      * Cierra automáticamente la Conexión, el Statement y el ResultSet al terminar.
      *
      * @return Lista de objetos Productos.
-     * @throws Exception Si ocurre un error de SQL.
+     * @throws SQLException Si ocurre un error de SQL.
      */
     public List<Productos> getProductos() throws SQLException {
 
@@ -79,5 +76,44 @@ public class ModeloProductos {
 
         //----- 8. Retornar la lista con los productos ya creados -----
         return productos;
+    }
+
+    /**
+     * Inserta un nuevo producto en la base de datos.
+     * Usa try-with-resources para evitar fugas de memoria.
+     *
+     * @param nuevoProducto El objeto con los datos del formulario.
+     * @throws SQLException Si falla la BBDD.
+     */
+    public void agregarElNuevoProducto(Productos nuevoProducto) throws SQLException {
+
+        //----- 2. Creamos la instruccion sql para insertar el producto -----
+        String sql = "INSERT INTO PRODUCTOS (CODIGOARTICULO, SECCION, NOMBREARTICULO, PRECIO, FECHA, IMPORTADO, PAISDEORIGEN)" +
+                "VALUES(?,?,?,?,?,?,?)";
+
+        try (
+                //----- 1. Obtenemos la conexión a la BBDD -----
+                Connection miConexion = origenDatos.getConnection();
+
+                //----- 3a. Creamos la consulta preparada (PreparedStatement) -----
+                PreparedStatement miStatement = miConexion.prepareStatement(sql)
+        ) {
+
+            //----- 3b. Establecemos los parámetros para el producto -----
+            miStatement.setString(1, nuevoProducto.getcArt());
+            miStatement.setString(2, nuevoProducto.getSeccion());
+            miStatement.setString(3, nuevoProducto.getnArt());
+            miStatement.setDouble(4, nuevoProducto.getPrecio());
+
+            java.util.Date utilDate = nuevoProducto.getFecha();
+            java.sql.Date fechaConvertida = new java.sql.Date(utilDate.getTime());
+            miStatement.setDate(5, fechaConvertida);
+
+            miStatement.setString(6, nuevoProducto.getImportado());
+            miStatement.setString(7, nuevoProducto.getpOrig());
+
+            //----- 4. Ejecutamos la instruccion sql -----
+            miStatement.execute();
+        }
     }
 }

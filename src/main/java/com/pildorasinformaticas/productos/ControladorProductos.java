@@ -7,6 +7,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import javax.servlet.ServletException;
 import javax.sql.DataSource;
@@ -17,9 +20,9 @@ import javax.sql.DataSource;
  * Su responsabilidad es:
  * <ol>
  * <li>Recibir la petición del navegador (usuario).</li>
+ * <li>Decidir qué acción tomar (Listar o Insertar) según el parámetro "instruccion".</li>
  * <li>Pedirle los datos a la clase {@link ModeloProductos} (Modelo).</li>
- * <li>Guardar esos datos en el request.</li>
- * <li>Enviar todo a la página JSP (Vista) para que se muestre.</li>
+ * <li>Guardar esos datos en el request y enviarlos a la JSP (Vista).</li>
  * </ol>
  * </p>
  *
@@ -36,7 +39,7 @@ public class ControladorProductos extends HttpServlet {
     @Resource(name="jdbc/Productos")
     private DataSource miPool;
 
-    /** Objeto auxiliar que contiene la lógica de base de datos. */
+    /** Objeto auxiliar que contiene la lógica de negocio y acceso a datos. */
     private ModeloProductos modeloProductos;
 
     /**
@@ -72,6 +75,66 @@ public class ControladorProductos extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+        // 1. Leer el parametro del formulario (input "hidden" llamado 'instruccion')
+        String elComando = request.getParameter("instruccion");
+
+        // 2. Si no se envia el parámetro (ej: primera carga), listar productos por defecto
+        if (elComando == null) elComando = "listar";
+
+        // 3. Redirigir el flujo de ejecución al metodo adecuado
+        switch (elComando){
+            case "listar":
+                obtenerProductos(request, response);
+                break;
+
+            case "insertarBBDD":
+                agregarProductos(request, response);
+                break;
+
+            default:
+                obtenerProductos(request, response);
+        }
+    }
+
+    /**
+     * Método encargado de recoger los datos del formulario y pedir al Modelo que los guarde.
+     */
+    private void agregarProductos(HttpServletRequest request, HttpServletResponse response) {
+        // 1. Leemos la información del producto que viene del formulario
+        String codArticulo = request.getParameter("codigo_articulo");
+        String seccion = request.getParameter("seccion");
+        String nombreArticulo = request.getParameter("nombre_articulo");
+        
+        SimpleDateFormat formatoFecha = new SimpleDateFormat("yyyy-MM-dd");
+        Date fecha = null;
+        try {
+            fecha = formatoFecha.parse(request.getParameter("fecha"));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        Double precio = Double.parseDouble((request.getParameter("precio")));
+        String importado = request.getParameter("importado");
+        String paisOrigen = request.getParameter("pais_origen");
+
+        // 2. Con esa información, creamos un objeto de tipo Productos
+        Productos nuevoProducto = new Productos(codArticulo, seccion, nombreArticulo, precio, fecha, importado, paisOrigen);
+
+        // 3. Enviamos el objeto al modelo (ModeloProductos) e insertamos el Producto en la BBDD
+        try {
+            modeloProductos.agregarElNuevoProducto(nuevoProducto);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 4. Volvemos a listado de productos para ver el nuevo registro
+        obtenerProductos(request, response);
+    }
+
+    /**
+     * Método encargado de pedir la lista completa al Modelo y enviarla al JSP.
+     */
+    private void obtenerProductos(HttpServletRequest request, HttpServletResponse response) {
         // Variable para almacenar la lista recuperada
         List<Productos> productos;
 

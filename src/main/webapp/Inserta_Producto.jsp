@@ -10,8 +10,13 @@
 
 <h1>Insertar Nuevo Producto</h1>
 
-<form name="form1" method="post" action="ControladorProductos">
+<form name="form1" method="get" action="ControladorProductos">
 
+    <!-- Con este input de tipo "hidden" conseguimos que cuando el usuario pulse el botón enviar del formulario,
+    toda la información va a ir al controlador (action), y junto a la información visible (lo que haya escrito el usuario)
+    va a viajar también otra información: una instrucción con un valor ("insertarBBDD"). Esto sirve para que cuando la información
+    llegue al controlador pueda controlar con un condicional if si lo que debe hacer es insertar (si le llega información)
+    o listar la información existente (si no le llega nada del formulario) -->
     <input type="hidden" name="instruccion" value="insertarBBDD">
 
     <div class="campo">
@@ -31,7 +36,7 @@
 
     <div class="campo">
         <label for="fecha">Fecha</label>
-        <input type="text" name="fecha" id="fecha" placeholder="dd/mm/aaaa">
+        <input type="date" name="fecha" id="fecha" placeholder="dd/mm/aaaa">
     </div>
 
     <div class="campo">

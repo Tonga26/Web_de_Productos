@@ -169,7 +169,7 @@ public class ControladorProductos extends HttpServlet {
         Productos elProducto = modeloProductos.getProducto(codArticulo);
 
         // 3. Colocamos el atributo correspondiente al codArticulo
-        request.setAttribute("CODIGO_ARTICULO", elProducto);
+        request.setAttribute("ProductoActualizar", elProducto);
 
         // 4. Enviar toda la informacion del Producto al Formulario Actualizar (JSP)
         RequestDispatcher dispatcher = request.getRequestDispatcher("/actualizarProducto.jsp");

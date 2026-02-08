@@ -90,7 +90,13 @@ public class ControladorProductos extends HttpServlet {
             case "insertarBBDD":
                 agregarProductos(request, response);
                 break;
-
+            case "cargar":
+                try {
+                    cargaProductos(request, response);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
             default:
                 obtenerProductos(request, response);
         }
@@ -104,7 +110,7 @@ public class ControladorProductos extends HttpServlet {
         String codArticulo = request.getParameter("codigo_articulo");
         String seccion = request.getParameter("seccion");
         String nombreArticulo = request.getParameter("nombre_articulo");
-        
+
         SimpleDateFormat formatoFecha = new SimpleDateFormat("yyyy-MM-dd");
         Date fecha = null;
         try {
@@ -153,5 +159,20 @@ public class ControladorProductos extends HttpServlet {
         } catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    private void cargaProductos(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        // 1. Leemos el codArticulo que viene del listado
+        String codArticulo = request.getParameter("cArticulo");
+
+        // 2. Enviamos el codArticulo al Modelo
+        Productos elProducto = modeloProductos.getProducto(codArticulo);
+
+        // 3. Colocamos el atributo correspondiente al codArticulo
+        request.setAttribute("CODIGO_ARTICULO", elProducto);
+
+        // 4. Enviar toda la informacion del Producto al Formulario Actualizar (JSP)
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/actualizarProducto.jsp");
+        dispatcher.forward(request, response);
     }
 }

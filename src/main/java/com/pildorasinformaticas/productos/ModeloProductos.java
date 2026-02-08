@@ -116,4 +116,53 @@ public class ModeloProductos {
             miStatement.execute();
         }
     }
+
+    /**
+     * Busca un producto específico por su código.
+     * @param codArticulo El código del artículo a buscar.
+     * @return El objeto Producto encontrado.
+     * @throws Exception Si hay error SQL o no se encuentra el producto.
+     */
+    public Productos getProducto(String codArticulo) throws Exception {
+        Productos elProducto = null;
+
+        // SQL para buscar
+        String sentenciaSql = "SELECT * FROM PRODUCTOS WHERE CODIGOARTICULO = ?";
+
+        try (
+                // 1. Establecemos la conexión
+                Connection miConexion = origenDatos.getConnection();
+
+                // 2. Creamos la consulta preparada usando esa conexión
+                PreparedStatement miStatement = miConexion.prepareStatement(sentenciaSql)
+        ) {
+
+            // 3. Establecemos el parámetro
+            miStatement.setString(1, codArticulo);
+
+            // 4. Ejecutamos. IMPORTANTE: En try-with-resources, el ResultSet
+            // idealmente debería estar en el paréntesis del try, pero así también funciona
+            // porque al cerrar el Statement se cierra el ResultSet.
+            try (ResultSet miResultset = miStatement.executeQuery()) {
+
+                if (miResultset.next()) {
+                    String seccion = miResultset.getString("SECCION");
+                    String n_art = miResultset.getString("NOMBREARTICULO");
+                    Double precio = miResultset.getDouble("PRECIO");
+                    Date fecha = miResultset.getDate("FECHA");
+                    String importado = miResultset.getString("IMPORTADO");
+                    String p_orig = miResultset.getString("PAISDEORIGEN");
+
+                    elProducto = new Productos(seccion, n_art, precio, fecha, importado, p_orig);
+                } else {
+                    throw new Exception("No hemos encontrado el producto con código articulo: " + codArticulo);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception(e);
+        }
+
+        return elProducto;
+    }
 }

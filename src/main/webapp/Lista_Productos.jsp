@@ -20,10 +20,17 @@
         <th>Fecha</th>
         <th>Precio</th>
         <th>Importado</th>
-        <th>País</th>
+        <th>País de origen</th>
+        <th>Acción</th>
     </tr>
 
     <c:forEach var="tempProd" items="${LISTAPRODUCTOS}">
+        <!-- Link para cada producto con su campo clave -->
+        <c:url var="linkTemp" value="ControladorProductos">
+            <c:param name="instruccion" value="cargar"></c:param>
+            <c:param name="cArticulo" value="${tempProd.cArt}"></c:param>
+        </c:url>
+
         <tr>
             <td>${tempProd.cArt}</td>
             <td>${tempProd.seccion}</td>
@@ -32,6 +39,7 @@
             <td>${tempProd.precio}</td>
             <td>${tempProd.importado}</td>
             <td>${tempProd.pOrig}</td>
+            <td><a href="${linkTemp}">Actualizar</a></td>
         </tr>
     </c:forEach>
 

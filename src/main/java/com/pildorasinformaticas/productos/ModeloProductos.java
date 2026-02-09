@@ -171,7 +171,7 @@ public class ModeloProductos {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            throw e; // Relanzar la excepción original
+            throw e;
         }
 
         return elProducto;
@@ -187,7 +187,6 @@ public class ModeloProductos {
      */
     public void actualizarProducto(Productos productoActualizado) throws SQLException{
 
-        // CORREGIDO: Aquí va el UPDATE (antes tenías DELETE)
         //----- 1. Creamos la sentencia sql -----
         String sql = "UPDATE productos SET SECCION=?, NOMBREARTICULO=?, PRECIO=?, FECHA=?, " +
                 "IMPORTADO=?, PAISDEORIGEN=? WHERE CODIGOARTICULO=?";
@@ -227,7 +226,6 @@ public class ModeloProductos {
      */
     public void eliminar(String codArticulo) throws SQLException{
 
-        // CORREGIDO: Aquí va el DELETE (antes tenías UPDATE)
         //----- 1. Creamos la sentencia sql -----
         String sql = "DELETE FROM PRODUCTOS WHERE CODIGOARTICULO=?";
 

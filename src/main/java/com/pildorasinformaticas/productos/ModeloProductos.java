@@ -13,7 +13,7 @@ import java.util.Date;
  * </p>
  *
  * @author Gaston
- * @version 1.0
+ * @version 1.1
  */
 public class ModeloProductos {
 
@@ -137,7 +137,7 @@ public class ModeloProductos {
      * @return El objeto Producto (SIN el ID seteado).
      * @throws Exception Si no se encuentra.
      */
-    public Productos buscarPorId(String codArticulo) throws Exception {
+    public Productos buscarPorId(String codArticulo) throws SQLException, Exception {
         Productos elProducto = null;
 
         //----- 1. SQL Buscar por ID -----
@@ -171,7 +171,7 @@ public class ModeloProductos {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            throw new Exception(e);
+            throw e; // Relanzar la excepción original
         }
 
         return elProducto;
@@ -187,6 +187,7 @@ public class ModeloProductos {
      */
     public void actualizarProducto(Productos productoActualizado) throws SQLException{
 
+        // CORREGIDO: Aquí va el UPDATE (antes tenías DELETE)
         //----- 1. Creamos la sentencia sql -----
         String sql = "UPDATE productos SET SECCION=?, NOMBREARTICULO=?, PRECIO=?, FECHA=?, " +
                 "IMPORTADO=?, PAISDEORIGEN=? WHERE CODIGOARTICULO=?";
@@ -210,6 +211,34 @@ public class ModeloProductos {
             miStatement.setString(5, productoActualizado.getImportado());
             miStatement.setString(6, productoActualizado.getpOrig());
             miStatement.setString(7, productoActualizado.getcArt());
+
+            //----- 5. Ejecutamos la instruccion sql -----
+            miStatement.execute();
+        }
+    }
+
+    /**
+     * Elimina físicamente un registro de la base de datos.
+     * <br>
+     * <strong>Semántica Spring:</strong> Equivale a <code>deleteById(id)</code>.
+     *
+     * @param codArticulo El ID (clave primaria) del producto a eliminar.
+     * @throws SQLException Si ocurre un error de restricción de integridad o conexión.
+     */
+    public void eliminar(String codArticulo) throws SQLException{
+
+        // CORREGIDO: Aquí va el DELETE (antes tenías UPDATE)
+        //----- 1. Creamos la sentencia sql -----
+        String sql = "DELETE FROM PRODUCTOS WHERE CODIGOARTICULO=?";
+
+        try (
+                //----- 2. Establecemos la conexion con la BBDD -----
+                Connection miConexion = origenDatos.getConnection();
+                //----- 3. Creamos la consulta preparada -----
+                PreparedStatement miStatement = miConexion.prepareStatement(sql)
+        ) {
+            //----- 4. Establecemos los parametros -----
+            miStatement.setString(1, codArticulo);
 
             //----- 5. Ejecutamos la instruccion sql -----
             miStatement.execute();

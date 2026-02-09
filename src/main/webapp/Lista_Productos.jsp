@@ -25,9 +25,15 @@
     </tr>
 
     <c:forEach var="tempProd" items="${LISTAPRODUCTOS}">
-        <!-- Link para cada producto con su campo clave -->
+        <!-- Link para cargar cada producto con su campo clave -->
         <c:url var="linkTemp" value="ControladorProductos">
             <c:param name="instruccion" value="cargar"></c:param>
+            <c:param name="cArticulo" value="${tempProd.cArt}"></c:param>
+        </c:url>
+
+        <!-- Link para eliminar cada producto con su campo clave -->
+        <c:url var="linkTempEliminar" value="ControladorProductos">
+            <c:param name="instruccion" value="eliminar"></c:param>
             <c:param name="cArticulo" value="${tempProd.cArt}"></c:param>
         </c:url>
 
@@ -39,7 +45,8 @@
             <td>${tempProd.precio}</td>
             <td>${tempProd.importado}</td>
             <td>${tempProd.pOrig}</td>
-            <td><a href="${linkTemp}" class="enlace-boton boton-actualizar">Actualizar</a></td>
+            <td><a href="${linkTemp}" class="enlace-boton boton-actualizar">Actualizar</a>&nbsp;&nbsp;
+                <a href="${linkTempEliminar}" class="enlace-boton boton-eliminar">Eliminar</a></td>
         </tr>
     </c:forEach>
 

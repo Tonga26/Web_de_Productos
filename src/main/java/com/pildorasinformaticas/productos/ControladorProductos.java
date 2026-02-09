@@ -101,10 +101,17 @@ public class ControladorProductos extends HttpServlet {
                 try {
                     actualizaProducto(request, response);
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
                 }
                 break;
 
+            case "eliminar":
+                try {
+                    eliminarProductoPorId(request, response);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                break;
             default:
                 listarProductos(request, response);
         }
@@ -253,6 +260,17 @@ public class ControladorProductos extends HttpServlet {
         }
 
         // 4. Volvemos al listado con la info actualizada
+        listarProductos(request, response);
+    }
+
+    private void eliminarProductoPorId(HttpServletRequest request, HttpServletResponse response) throws SQLException{
+        // 1. Carpturamos el codigo articulo (campo clave)
+        String codArticulo = request.getParameter("cArticulo");
+
+        // 2. Borramos el producto de la BBDD
+        modeloProductos.eliminar(codArticulo);
+
+        // 3. Volvemos al listado de productos
         listarProductos(request, response);
     }
 }

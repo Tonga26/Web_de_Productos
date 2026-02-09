@@ -2,7 +2,7 @@
    ESTILOS GENERALES (Body y Títulos)
    ========================================= */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente más moderna */
     background-color: #f4f4f4;
     margin: 0;
     padding: 20px;
@@ -19,7 +19,7 @@ h1 {
    ========================================= */
 table {
     border-collapse: collapse;
-    width: 80%;
+    width: 90%; /* Un poco más ancha para que quepan los botones */
     margin: 0 auto;
     background-color: #fff;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -39,6 +39,7 @@ th {
     font-weight: bold;
     text-transform: uppercase;
     font-size: 14px;
+    letter-spacing: 1px;
 }
 
 tr:nth-child(even) {
@@ -51,7 +52,7 @@ tr:hover {
 }
 
 /* =========================================
-   ESTILOS DEL FORMULARIO (Inserta_Producto)
+   ESTILOS DEL FORMULARIO (Inserta/Actualiza)
    ========================================= */
 form {
     width: 450px;
@@ -74,38 +75,36 @@ label {
     font-weight: bold;
     color: #555;
     width: 130px;
+    text-align: left;
 }
 
-input[type="text"] {
+/* Estilo para todos los inputs de texto y fecha */
+input[type="text"],
+input[type="date"] {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
     width: 250px;
     font-size: 14px;
+    transition: border 0.3s;
 }
 
-input[type="text"]:focus {
-    border-color: #66afe9;
+input[type="text"]:focus,
+input[type="date"]:focus {
+    border-color: #2196F3; /* Azul al hacer foco */
     outline: none;
+    box-shadow: 0 0 5px rgba(33, 150, 243, 0.2);
 }
 
 /* =========================================
-   ESTILOS DE BOTONES Y ENLACES
+   ESTILOS DE BOTONES GENERALES
    ========================================= */
-/* Contenedor del botón en la lista */
-#contenedorBoton {
-    width: 80%;
-    margin: 20px auto;
-    text-align: center;
-}
-
-/* Contenedor de botones en el formulario */
-.botones {
+#contenedorBoton, .botones {
     text-align: center;
     margin-top: 25px;
 }
 
-/* Estilo base para botones */
+/* Base para inputs tipo submit, reset y botón insertar */
 input[type="submit"],
 input[type="reset"],
 .boton-insertar {
@@ -116,11 +115,13 @@ input[type="reset"],
     font-size: 16px;
     font-weight: bold;
     margin: 0 5px;
-    transition: background 0.3s, transform 0.1s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: inline-block;
+    text-decoration: none; /* Para que .boton-insertar no tenga subrayado si es un link */
 }
 
-/* Botón Verde (Enviar / Insertar) */
+/* Botón VERDE (Insertar / Guardar) */
 input[type="submit"],
 .boton-insertar {
     background-color: #4CAF50;
@@ -133,7 +134,7 @@ input[type="submit"]:hover,
     transform: translateY(-2px);
 }
 
-/* Botón Rojo (Reset) */
+/* Botón ROJO (Reset / Borrar formulario) */
 input[type="reset"] {
     background-color: #f44336;
     color: white;
@@ -141,6 +142,7 @@ input[type="reset"] {
 
 input[type="reset"]:hover {
     background-color: #d32f2f;
+    transform: translateY(-2px);
 }
 
 /* Enlace "Volver" */
@@ -150,9 +152,48 @@ input[type="reset"]:hover {
     margin-top: 20px;
     text-decoration: none;
     color: #555;
+    font-size: 14px;
 }
 
 .volver-link:hover {
     text-decoration: underline;
-    color: #333;
+    color: #000;
+}
+
+/* =========================================
+   NUEVO: BOTONES DENTRO DE LA TABLA (Lista)
+   ========================================= */
+
+/* Explicación Técnica:
+   Los enlaces <a> son elementos 'inline' por defecto (como una letra).
+   Para que acepten padding y parezcan botones, usamos 'display: inline-block'.
+*/
+.enlace-boton {
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    color: white;
+    transition: background 0.3s;
+    display: inline-block; /* Crucial para dar dimensiones */
+    margin: 0 2px;
+}
+
+/* Botón AZUL para Actualizar */
+.boton-actualizar {
+    background-color: #2196F3; /* Azul Material Design */
+}
+
+.boton-actualizar:hover {
+    background-color: #0b7dda; /* Azul más oscuro al pasar mouse */
+}
+
+/* (Opcional) Botón ROJO para Eliminar - por si quieres usarlo también */
+.boton-eliminar {
+    background-color: #e53935;
+}
+
+.boton-eliminar:hover {
+    background-color: #b71c1c;
 }

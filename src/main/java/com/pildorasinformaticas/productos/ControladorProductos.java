@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,47 +16,30 @@ import javax.servlet.ServletException;
 import javax.sql.DataSource;
 
 /**
- * Servlet que actúa como CONTROLADOR en el patrón MVC (Modelo-Vista-Controlador).
+ * Servlet que actúa como CONTROLADOR en el patrón MVC.
  * <p>
- * Su responsabilidad es:
- * <ol>
- * <li>Recibir la petición del navegador (usuario).</li>
- * <li>Decidir qué acción tomar (Listar o Insertar) según el parámetro "instruccion".</li>
- * <li>Pedirle los datos a la clase {@link ModeloProductos} (Modelo).</li>
- * <li>Guardar esos datos en el request y enviarlos a la JSP (Vista).</li>
- * </ol>
+ * Gestiona el flujo de la aplicación recibiendo peticiones HTTP y delegando
+ * la lógica de negocio al Modelo {@link ModeloProductos}.
  * </p>
  *
  * @author Gaston
- * @version 1.0
+ * @version 2.0 (Refactorizado con nomenclatura semántica estilo Spring)
  */
 @WebServlet("/ControladorProductos")
 public class ControladorProductos extends HttpServlet {
 
     /**
-     * Inyección del DataSource (Pool de conexiones) configurado en el servidor.
-     * Tomcat se encarga de iniciar esto antes de que arranque el Servlet.
+     * Inyección del DataSource (Pool de conexiones).
      */
     @Resource(name="jdbc/Productos")
     private DataSource miPool;
 
-    /** Objeto auxiliar que contiene la lógica de negocio y acceso a datos. */
+    /** Referencia al Modelo (Repositorio). */
     private ModeloProductos modeloProductos;
 
-    /**
-     * Método del ciclo de vida del Servlet (se ejecuta una sola vez al inicio).
-     * <p>
-     * Se utiliza para inicializar el {@link ModeloProductos}.
-     * Es necesario hacerlo aquí y no en el constructor, porque en el constructor
-     * el 'miPool' todavía podría ser null (la inyección de dependencias ocurre después).
-     * </p>
-     *
-     * @throws ServletException Si ocurre un error al inicializar el modelo.
-     */
     @Override
     public void init() throws ServletException {
         super.init();
-
         try {
             modeloProductos = new ModeloProductos(miPool);
         } catch (Exception e){
@@ -64,50 +48,150 @@ public class ControladorProductos extends HttpServlet {
     }
 
     /**
-     * Maneja las peticiones HTTP GET enviadas al Servlet.
-     * Orquesta el flujo de datos desde la Base de Datos hasta la Vista (JSP).
-     *
-     * @param request  La solicitud del navegador.
-     * @param response La respuesta que enviaremos.
-     * @throws ServletException Si hay error en el Servlet.
-     * @throws IOException      Si hay error de entrada/salida.
+     * Método principal que gestiona las peticiones GET.
+     * Actúa como un "Dispatcher" o enrutador interno.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        // 1. Leer el parametro del formulario (input "hidden" llamado 'instruccion')
+        // 1. Leer el comando
         String elComando = request.getParameter("instruccion");
 
-        // 2. Si no se envia el parámetro (ej: primera carga), listar productos por defecto
+        // 2. Carga por defecto
         if (elComando == null) elComando = "listar";
 
-        // 3. Redirigir el flujo de ejecución al metodo adecuado
+        // 3. Enrutamiento según la intención del usuario
         switch (elComando){
             case "listar":
-                obtenerProductos(request, response);
+                listarProductos(request, response);
                 break;
 
             case "insertarBBDD":
-                agregarProductos(request, response);
+                guardarProducto(request, response);
                 break;
+
             case "cargar":
                 try {
-                    cargaProductos(request, response);
+                    mostrarFormularioActualizar(request, response);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
+
+            case "actualizarBBDD":
+                try {
+                    actualizaProducto(request, response);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+
             default:
-                obtenerProductos(request, response);
+                listarProductos(request, response);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // MÉTODOS AUXILIARES (HANDLERS)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Recibe los datos del formulario de inserción y solicita al modelo guardarlos.
+     * <br>
+     * <strong>Semántica:</strong> Equivale a un <code>save()</code> en un Controller de Spring.
+     *
+     * <p>// Antes llamado por Juan: agregarProductos</p>
+     *
+     * @param request Petición con los datos del nuevo producto.
+     * @param response Respuesta para redireccionar.
+     */
+    private void guardarProducto(HttpServletRequest request, HttpServletResponse response) {
+        // 1. Extraer parámetros del Request
+        String codArticulo = request.getParameter("codigo_articulo");
+        String seccion = request.getParameter("seccion");
+        String nombreArticulo = request.getParameter("nombre_articulo");
+
+        // 2. Parseo de fecha (String -> Date)
+        SimpleDateFormat formatoFecha = new SimpleDateFormat("yyyy-MM-dd");
+        Date fecha = null;
+        try {
+            fecha = formatoFecha.parse(request.getParameter("fecha"));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        // 3. Conversión de tipos numéricos
+        Double precio = Double.parseDouble((request.getParameter("precio")));
+        String importado = request.getParameter("importado");
+        String paisOrigen = request.getParameter("pais_origen");
+
+        // 4. Crear la entidad Producto
+        Productos nuevoProducto = new Productos(codArticulo, seccion, nombreArticulo, precio, fecha, importado, paisOrigen);
+
+        // 5. Invocar al Modelo para persistir los datos
+        try {
+            modeloProductos.guardar(nuevoProducto);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 6. Redirigir a la lista para ver el cambio
+        listarProductos(request, response);
+    }
+
+    /**
+     * Recupera todos los productos y los envía a la vista principal.
+     * <br>
+     * <strong>Semántica:</strong> Equivale a un <code>findAll()</code> o <code>list()</code>.
+     *
+     * <p>// Antes llamado por Juan: obtenerProductos</p>
+     */
+    private void listarProductos(HttpServletRequest request, HttpServletResponse response) {
+        List<Productos> productos;
+
+        try {
+            // 1. Pedir la lista al Modelo (Repositorio)
+            productos = modeloProductos.buscarTodos();
+
+            // 2. Cargar el atributo en el request (llamamos "LISTAPRODUCTOS" al arraylist "productos" que nos devuelve el modelo)
+            request.setAttribute("LISTAPRODUCTOS", productos);
+
+            // 3. Despachar al JSP
+            RequestDispatcher miDispatcher = request.getRequestDispatcher("/Lista_Productos.jsp");
+            miDispatcher.forward(request, response);
+
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
     /**
-     * Método encargado de recoger los datos del formulario y pedir al Modelo que los guarde.
+     * Busca un producto por su ID y carga el formulario de edición con sus datos.
+     * <br>
+     * <strong>Semántica:</strong> Prepara la UI para editar (Show Edit Form).
+     *
+     * <p>// Antes llamado por Juan: cargaProductos</p>
+     *
+     * @throws Exception Si no encuentra el producto o hay error SQL.
      */
-    private void agregarProductos(HttpServletRequest request, HttpServletResponse response) {
-        // 1. Leemos la información del producto que viene del formulario
-        String codArticulo = request.getParameter("codigo_articulo");
+    private void mostrarFormularioActualizar(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        // 1. Obtener el ID del producto seleccionado
+        String codArticulo = request.getParameter("cArticulo");
+
+        // 2. Buscar la entidad en la BBDD a través del Modelo
+        Productos elProducto = modeloProductos.buscarPorId(codArticulo);
+
+        // 3. Poner el producto en el "sobre" (Request) para que la vista lo lea
+        request.setAttribute("ProductoActualizar", elProducto);
+
+        // 4. Enviar al JSP específico de actualización
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/actualizarProducto.jsp");
+        dispatcher.forward(request, response);
+    }
+
+    private void actualizaProducto(HttpServletRequest request, HttpServletResponse response) throws SQLException {
+        // 1. Leemos los datos que vienen del formulario actualizar
+        String codArticulo = request.getParameter("CArt");
         String seccion = request.getParameter("seccion");
         String nombreArticulo = request.getParameter("nombre_articulo");
 
@@ -123,56 +207,17 @@ public class ControladorProductos extends HttpServlet {
         String importado = request.getParameter("importado");
         String paisOrigen = request.getParameter("pais_origen");
 
-        // 2. Con esa información, creamos un objeto de tipo Productos
-        Productos nuevoProducto = new Productos(codArticulo, seccion, nombreArticulo, precio, fecha, importado, paisOrigen);
+        // 2. Creamos un objeto de tipo producto con la info del formulario
+        Productos productoActualizado = new Productos(codArticulo, seccion, nombreArticulo, precio, fecha, importado, paisOrigen);
 
-        // 3. Enviamos el objeto al modelo (ModeloProductos) e insertamos el Producto en la BBDD
+        // 3. Actualizamos la BBDD con la info del objeto producto
         try {
-            modeloProductos.agregarElNuevoProducto(nuevoProducto);
+            modeloProductos.actualizarProducto(productoActualizado);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // 4. Volvemos a listado de productos para ver el nuevo registro
-        obtenerProductos(request, response);
-    }
-
-    /**
-     * Método encargado de pedir la lista completa al Modelo y enviarla al JSP.
-     */
-    private void obtenerProductos(HttpServletRequest request, HttpServletResponse response) {
-        // Variable para almacenar la lista recuperada
-        List<Productos> productos;
-
-        try {
-            // 1. Obtener la lista de producto desde el modelo
-            productos = modeloProductos.getProductos();
-
-            // 2. Agregar la lista de productos al request
-            // "LISTAPRODUCTOS" es la etiqueta (key) que usará el JSP para leer los datos
-            request.setAttribute("LISTAPRODUCTOS", productos);
-
-            // 3. Enviar el Request a la pagina JSP
-            RequestDispatcher miDispatcher = request.getRequestDispatcher("/Lista_Productos.jsp");
-            miDispatcher.forward(request, response);
-
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    private void cargaProductos(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        // 1. Leemos el codArticulo que viene del listado
-        String codArticulo = request.getParameter("cArticulo");
-
-        // 2. Enviamos el codArticulo al Modelo
-        Productos elProducto = modeloProductos.getProducto(codArticulo);
-
-        // 3. Colocamos el atributo correspondiente al codArticulo
-        request.setAttribute("ProductoActualizar", elProducto);
-
-        // 4. Enviar toda la informacion del Producto al Formulario Actualizar (JSP)
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/actualizarProducto.jsp");
-        dispatcher.forward(request, response);
+        // 4. Volvemos al listado con la info actualizada
+        listarProductos(request, response);
     }
 }

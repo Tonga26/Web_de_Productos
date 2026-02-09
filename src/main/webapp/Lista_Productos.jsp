@@ -39,7 +39,7 @@
             <td>${tempProd.precio}</td>
             <td>${tempProd.importado}</td>
             <td>${tempProd.pOrig}</td>
-            <td><a href="${linkTemp}">Actualizar</a></td>
+            <td><a href="${linkTemp}" class="enlace-boton boton-actualizar">Actualizar</a></td>
         </tr>
     </c:forEach>
 

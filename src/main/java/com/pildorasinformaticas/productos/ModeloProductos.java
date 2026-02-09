@@ -7,46 +7,46 @@ import java.util.List;
 import java.util.Date;
 
 /**
- * Clase que gestiona la lógica de negocio y acceso a datos para los Productos.
+ * Clase que gestiona la lógica de negocio y acceso a datos (Repositorio).
  * <p>
- * Actúa como el componente "Modelo" (DAO) en el patrón MVC.
- * Implementa try-with-resources para una gestión de memoria segura y automática.
+ * Actúa como la capa de persistencia. En Spring esto sería un "Repository".
  * </p>
  *
  * @author Gaston
- * @version 1.2
+ * @version 1.0
  */
 public class ModeloProductos {
 
-    /** Fuente de datos (Pool de conexiones) gestionada por el servidor. */
+    /** Fuente de datos (Pool de conexiones). */
     private final DataSource origenDatos;
 
-    /**
-     * Constructor del Modelo.
-     * Recibe el DataSource mediante inyección de dependencias desde el Servlet.
-     *
-     * @param origenDatos El Pool de conexiones configurado en context.xml.
-     */
     public ModeloProductos(DataSource origenDatos){
         this.origenDatos = origenDatos;
     }
 
+    // -------------------------------------------------------------------------
+    // MÉTODOS CRUD (Create, Read, Update, Delete)
+    // -------------------------------------------------------------------------
+
     /**
-     * Obtiene el listado completo de productos de la base de datos.
-     * Cierra automáticamente la Conexión, el Statement y el ResultSet al terminar.
+     * Recupera todos los registros de la tabla para el listado general.
+     * <br>
+     * <strong>Semántica Spring:</strong> Equivale a <code>findAll()</code>.
+     *
+     * <p>// Antes llamado por Juan: getProductos</p>
      *
      * @return Lista de objetos Productos.
      * @throws SQLException Si ocurre un error de SQL.
      */
-    public List<Productos> getProductos() throws SQLException {
+    public List<Productos> buscarTodos() throws SQLException {
 
         List<Productos> productos = new ArrayList<>();
 
-        //----- 2. Crear la sentencia SQL (La definimos antes para usarla en el try) -----
+        //----- 1. Crear la sentencia SQL -----
         String sentenciaSql = "SELECT * FROM PRODUCTOS";
 
         try (
-                //----- 1. Establecer la conexión -----
+                //----- 2. Establecer la conexión (Try-with-resources) -----
                 Connection miConexion = origenDatos.getConnection();
 
                 //----- 3. Crear el Statement -----
@@ -56,8 +56,9 @@ public class ModeloProductos {
                 ResultSet miResultset = miStatement.executeQuery(sentenciaSql)
         ) {
 
-            // ----- 5. Obtener el Resultset obtenido -----
+            // ----- 5. Recorrer el ResultSet -----
             while (miResultset.next()){
+                // Aquí SÍ necesitamos el ID para armar los links de "Actualizar" en la tabla
                 String c_art = miResultset.getString("CODIGOARTICULO");
                 String seccion = miResultset.getString("SECCION");
                 String n_art = miResultset.getString("NOMBREARTICULO");
@@ -66,45 +67,43 @@ public class ModeloProductos {
                 String importado = miResultset.getString("IMPORTADO");
                 String p_orig = miResultset.getString("PAISDEORIGEN");
 
-                //----- 6. Crear el objeto de tipo Producto con los campos obtenidos de la BBDD -----
+                //----- 6. Crear el objeto COMPLETO (Con ID) para la lista -----
                 Productos tempProd = new Productos(c_art, seccion, n_art, precio, fecha, importado, p_orig);
 
-                //----- 7. Guardar los productos en la lista productos -----
+                //----- 7. Agregarlo a la lista -----
                 productos.add(tempProd);
             }
         }
-
-        //----- 8. Retornar la lista con los productos ya creados -----
         return productos;
     }
 
     /**
-     * Inserta un nuevo producto en la base de datos.
-     * Usa try-with-resources para evitar fugas de memoria.
+     * Persiste un nuevo objeto en la base de datos.
+     * <br>
+     * <strong>Semántica Spring:</strong> Equivale a <code>save()</code> (modo inserción).
      *
-     * @param nuevoProducto El objeto con los datos del formulario.
+     * <p>// Antes llamado por Juan: agregarElNuevoProducto</p>
+     *
+     * @param nuevoProducto El objeto a guardar.
      * @throws SQLException Si falla la BBDD.
      */
-    public void agregarElNuevoProducto(Productos nuevoProducto) throws SQLException {
+    public void guardar(Productos nuevoProducto) throws SQLException {
 
-        //----- 2. Creamos la instruccion sql para insertar el producto -----
+        //----- 1. SQL Insertar -----
         String sql = "INSERT INTO PRODUCTOS (CODIGOARTICULO, SECCION, NOMBREARTICULO, PRECIO, FECHA, IMPORTADO, PAISDEORIGEN)" +
                 "VALUES(?,?,?,?,?,?,?)";
 
         try (
-                //----- 1. Obtenemos la conexión a la BBDD -----
                 Connection miConexion = origenDatos.getConnection();
-
-                //----- 3a. Creamos la consulta preparada (PreparedStatement) -----
                 PreparedStatement miStatement = miConexion.prepareStatement(sql)
         ) {
-
-            //----- 3b. Establecemos los parámetros para el producto -----
+            //----- 2. Establecer parámetros -----
             miStatement.setString(1, nuevoProducto.getcArt());
             miStatement.setString(2, nuevoProducto.getSeccion());
             miStatement.setString(3, nuevoProducto.getnArt());
             miStatement.setDouble(4, nuevoProducto.getPrecio());
 
+            // Tratamiento especial para fechas (java.util.Date -> java.sql.Date)
             java.util.Date utilDate = nuevoProducto.getFecha();
             java.sql.Date fechaConvertida = new java.sql.Date(utilDate.getTime());
             miStatement.setDate(5, fechaConvertida);
@@ -112,40 +111,42 @@ public class ModeloProductos {
             miStatement.setString(6, nuevoProducto.getImportado());
             miStatement.setString(7, nuevoProducto.getpOrig());
 
-            //----- 4. Ejecutamos la instruccion sql -----
+            //----- 3. Ejecutar -----
             miStatement.execute();
         }
     }
 
     /**
-     * Busca un producto específico por su código.
-     * @param codArticulo El código del artículo a buscar.
-     * @return El objeto Producto encontrado.
-     * @throws Exception Si hay error SQL o no se encuentra el producto.
+     * Busca una entidad única por su clave primaria para rellenar el formulario de edición.
+     * <br>
+     * No devuelve el ID dentro del objeto porque ya lo tenemos.
+     * <br>
+     * <strong>Semántica Spring:</strong> Equivale a <code>findById(id)</code>.
+     *
+     * <p>// Antes llamado por Juan: getProducto</p>
+     *
+     * @param codArticulo El ID del producto a buscar.
+     * @return El objeto Producto (SIN el ID seteado).
+     * @throws Exception Si no se encuentra.
      */
-    public Productos getProducto(String codArticulo) throws Exception {
+    public Productos buscarPorId(String codArticulo) throws Exception {
         Productos elProducto = null;
 
-        // SQL para buscar
+        //----- 1. SQL Buscar por ID -----
         String sentenciaSql = "SELECT * FROM PRODUCTOS WHERE CODIGOARTICULO = ?";
 
         try (
-                // 1. Establecemos la conexión
                 Connection miConexion = origenDatos.getConnection();
-
-                // 2. Creamos la consulta preparada usando esa conexión
                 PreparedStatement miStatement = miConexion.prepareStatement(sentenciaSql)
         ) {
-
-            // 3. Establecemos el parámetro
+            //----- 2. Establecer parámetro ID -----
             miStatement.setString(1, codArticulo);
 
-            // 4. Ejecutamos. IMPORTANTE: En try-with-resources, el ResultSet
-            // idealmente debería estar en el paréntesis del try, pero así también funciona
-            // porque al cerrar el Statement se cierra el ResultSet.
+            //----- 3. Ejecutar y obtener resultados -----
             try (ResultSet miResultset = miStatement.executeQuery()) {
 
                 if (miResultset.next()) {
+                    String c_Art = miResultset.getString("CODIGOARTICULO");
                     String seccion = miResultset.getString("SECCION");
                     String n_art = miResultset.getString("NOMBREARTICULO");
                     Double precio = miResultset.getDouble("PRECIO");
@@ -153,7 +154,9 @@ public class ModeloProductos {
                     String importado = miResultset.getString("IMPORTADO");
                     String p_orig = miResultset.getString("PAISDEORIGEN");
 
-                    elProducto = new Productos(seccion, n_art, precio, fecha, importado, p_orig);
+                    //----- 4. Crear objeto con Constructor completo -----
+                    elProducto = new Productos(c_Art, seccion, n_art, precio, fecha, importado, p_orig);
+
                 } else {
                     throw new Exception("No hemos encontrado el producto con código articulo: " + codArticulo);
                 }
@@ -164,5 +167,36 @@ public class ModeloProductos {
         }
 
         return elProducto;
+    }
+
+    public void actualizarProducto(Productos productoActualizado) throws SQLException{
+
+        //----- 1. Creamos la sentencia sql -----
+        String sql = "UPDATE productos SET SECCION=?, NOMBREARTICULO=?, PRECIO=?, FECHA=?, " +
+                "IMPORTADO=?, PAISDEORIGEN=? WHERE CODIGOARTICULO=?";
+
+        try (
+                //----- 2. Establecemos la conexion con la BBDD -----
+                Connection miConexion = origenDatos.getConnection();
+                //----- 3. Creamos la consulta preparada -----
+                PreparedStatement miStatement = miConexion.prepareStatement(sql)
+        ) {
+            //----- 4. Establecemos los parametros -----
+            miStatement.setString(1, productoActualizado.getSeccion());
+            miStatement.setString(2, productoActualizado.getnArt());
+            miStatement.setDouble(3, productoActualizado.getPrecio());
+
+            // Tratamiento especial para fechas (java.util.Date -> java.sql.Date)
+            java.util.Date utilDate = productoActualizado.getFecha();
+            java.sql.Date fechaConvertida = new java.sql.Date(utilDate.getTime());
+            miStatement.setDate(4, fechaConvertida);
+
+            miStatement.setString(5, productoActualizado.getImportado());
+            miStatement.setString(6, productoActualizado.getpOrig());
+            miStatement.setString(7, productoActualizado.getcArt());
+
+            //----- 5. Ejecutamos la instruccion sql -----
+            miStatement.execute();
+        }
     }
 }

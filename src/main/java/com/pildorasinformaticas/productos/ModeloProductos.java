@@ -17,9 +17,17 @@ import java.util.Date;
  */
 public class ModeloProductos {
 
-    /** Fuente de datos (Pool de conexiones). */
+    /** Fuente de datos (Pool de conexiones) inyectada desde el Servlet. */
     private final DataSource origenDatos;
 
+    /**
+     * Constructor del modelo.
+     * <p>
+     * Recibe el DataSource (Pool) para poder obtener conexiones a demanda.
+     * </p>
+     *
+     * @param origenDatos El pool de conexiones configurado en el servidor.
+     */
     public ModeloProductos(DataSource origenDatos){
         this.origenDatos = origenDatos;
     }
@@ -169,6 +177,14 @@ public class ModeloProductos {
         return elProducto;
     }
 
+    /**
+     * Actualiza los datos de un registro existente en la base de datos.
+     * <br>
+     * <strong>Semántica Spring:</strong> Equivale a <code>save()</code> cuando la entidad ya tiene ID (modo actualización).
+     *
+     * @param productoActualizado Objeto que contiene los nuevos datos y el ID (cArt) para el WHERE.
+     * @throws SQLException Si ocurre un error al ejecutar la sentencia UPDATE.
+     */
     public void actualizarProducto(Productos productoActualizado) throws SQLException{
 
         //----- 1. Creamos la sentencia sql -----

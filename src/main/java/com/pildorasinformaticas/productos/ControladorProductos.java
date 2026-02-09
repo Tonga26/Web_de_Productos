@@ -30,13 +30,23 @@ public class ControladorProductos extends HttpServlet {
 
     /**
      * Inyección del DataSource (Pool de conexiones).
+     * Gestionado por el contenedor (Tomcat) a través de JNDI.
      */
     @Resource(name="jdbc/Productos")
     private DataSource miPool;
 
-    /** Referencia al Modelo (Repositorio). */
+    /** Referencia al Modelo (Repositorio) para operaciones de base de datos. */
     private ModeloProductos modeloProductos;
 
+    /**
+     * Inicializa el Servlet.
+     * <p>
+     * Se ejecuta una única vez cuando el servidor carga el Servlet.
+     * Aquí instanciamos el modelo pasándole el pool de conexiones.
+     * </p>
+     *
+     * @throws ServletException Si ocurre un error al inicializar el modelo.
+     */
     @Override
     public void init() throws ServletException {
         super.init();
@@ -50,6 +60,15 @@ public class ControladorProductos extends HttpServlet {
     /**
      * Método principal que gestiona las peticiones GET.
      * Actúa como un "Dispatcher" o enrutador interno.
+     * <p>
+     * Lee el parámetro "instruccion" para determinar qué acción realizar
+     * (listar, insertar, cargar formulario, actualizar).
+     * </p>
+     *
+     * @param request  Objeto solicitud HTTP.
+     * @param response Objeto respuesta HTTP.
+     * @throws ServletException Si hay un error interno del Servlet.
+     * @throws IOException      Si hay un error de entrada/salida.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -145,6 +164,9 @@ public class ControladorProductos extends HttpServlet {
      * <strong>Semántica:</strong> Equivale a un <code>findAll()</code> o <code>list()</code>.
      *
      * <p>// Antes llamado por Juan: obtenerProductos</p>
+     *
+     * @param request Solicitud para guardar el atributo de lista.
+     * @param response Respuesta para hacer el forward al JSP.
      */
     private void listarProductos(HttpServletRequest request, HttpServletResponse response) {
         List<Productos> productos;
@@ -172,6 +194,8 @@ public class ControladorProductos extends HttpServlet {
      *
      * <p>// Antes llamado por Juan: cargaProductos</p>
      *
+     * @param request Contiene el parámetro "cArticulo" (ID).
+     * @param response Respuesta para enviar al JSP de actualización.
      * @throws Exception Si no encuentra el producto o hay error SQL.
      */
     private void mostrarFormularioActualizar(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -189,6 +213,17 @@ public class ControladorProductos extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
+    /**
+     * Procesa la actualización de un producto existente.
+     * <p>
+     * Recoge los datos modificados desde el formulario JSP, crea un objeto Producto actualizado
+     * y solicita al Modelo que ejecute el UPDATE en la base de datos.
+     * </p>
+     *
+     * @param request Solicitud HTTP con los parámetros del formulario (incluyendo hidden "CArt").
+     * @param response Respuesta HTTP para redirigir al listado tras la actualización.
+     * @throws SQLException Si ocurre un error al intentar actualizar la base de datos.
+     */
     private void actualizaProducto(HttpServletRequest request, HttpServletResponse response) throws SQLException {
         // 1. Leemos los datos que vienen del formulario actualizar
         String codArticulo = request.getParameter("CArt");

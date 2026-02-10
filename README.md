@@ -85,7 +85,7 @@ Ejecutar:
 - Acceder a: http://localhost:8080/Web_de_Productos
 
 📝 Autor
-Gastón - Desarrollador Java Backend en formación.
+Gastón Armando Giorgio - Desarrollador Java Backend en formación.
 
 Proyecto realizado como parte del curso de Java EE de Píldoras Informáticas (Juan Díaz).
 

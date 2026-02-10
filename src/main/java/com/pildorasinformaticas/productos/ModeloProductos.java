@@ -13,7 +13,7 @@ import java.util.Date;
  * </p>
  *
  * @author Gaston
- * @version 1.1
+ * @version 2.0
  */
 public class ModeloProductos {
 
@@ -40,8 +40,6 @@ public class ModeloProductos {
      * Recupera todos los registros de la tabla para el listado general.
      * <br>
      * <strong>Semántica Spring:</strong> Equivale a <code>findAll()</code>.
-     *
-     * <p>// Antes llamado por Juan: getProductos</p>
      *
      * @return Lista de objetos Productos.
      * @throws SQLException Si ocurre un error de SQL.
@@ -90,8 +88,6 @@ public class ModeloProductos {
      * <br>
      * <strong>Semántica Spring:</strong> Equivale a <code>save()</code> (modo inserción).
      *
-     * <p>// Antes llamado por Juan: agregarElNuevoProducto</p>
-     *
      * @param nuevoProducto El objeto a guardar.
      * @throws SQLException Si falla la BBDD.
      */
@@ -131,10 +127,8 @@ public class ModeloProductos {
      * <br>
      * <strong>Semántica Spring:</strong> Equivale a <code>findById(id)</code>.
      *
-     * <p>// Antes llamado por Juan: getProducto</p>
-     *
      * @param codArticulo El ID del producto a buscar.
-     * @return El objeto Producto (SIN el ID seteado).
+     * @return El objeto Producto.
      * @throws Exception Si no se encuentra.
      */
     public Productos buscarPorId(String codArticulo) throws SQLException, Exception {

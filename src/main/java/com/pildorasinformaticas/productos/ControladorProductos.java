@@ -126,8 +126,6 @@ public class ControladorProductos extends HttpServlet {
      * <br>
      * <strong>Semántica:</strong> Equivale a un <code>save()</code> en un Controller de Spring.
      *
-     * <p>// Antes llamado por Juan: agregarProductos</p>
-     *
      * @param request Petición con los datos del nuevo producto.
      * @param response Respuesta para redireccionar.
      */
@@ -170,8 +168,6 @@ public class ControladorProductos extends HttpServlet {
      * <br>
      * <strong>Semántica:</strong> Equivale a un <code>findAll()</code> o <code>list()</code>.
      *
-     * <p>// Antes llamado por Juan: obtenerProductos</p>
-     *
      * @param request Solicitud para guardar el atributo de lista.
      * @param response Respuesta para hacer el forward al JSP.
      */
@@ -198,8 +194,6 @@ public class ControladorProductos extends HttpServlet {
      * Busca un producto por su ID y carga el formulario de edición con sus datos.
      * <br>
      * <strong>Semántica:</strong> Prepara la UI para editar (Show Edit Form).
-     *
-     * <p>// Antes llamado por Juan: cargaProductos</p>
      *
      * @param request Contiene el parámetro "cArticulo" (ID).
      * @param response Respuesta para enviar al JSP de actualización.
